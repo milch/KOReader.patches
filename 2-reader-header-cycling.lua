@@ -113,11 +113,6 @@ local MODE_NAMES = {
 	[MODE_FULL_INFO] = _("Full info (author/title/chapter)"),
 }
 
--- Get current mode name
-local function getCurrentModeName()
-	return MODE_NAMES[current_mode] or _("Unknown")
-end
-
 -- Set mode and refresh display
 local function setMode(mode, readerui_instance)
 	current_mode = mode
@@ -146,35 +141,6 @@ local function cyclePrevious(readerui_instance)
 	setMode(prev_mode, readerui_instance)
 end
 
--- Helper function to patch menu items
-local function patchMenuItem(attrib_name, replacement, menu, ...)
-	local function findItem(sub_items, texts)
-		local find = {}
-		local texts = type(texts) == "table" and texts or { texts }
-		for _, text in ipairs(texts) do find[text] = true end
-		for _, item in ipairs(sub_items) do
-			local text = item.text or (item.text_func and item.text_func())
-			if text and find[text] then return item end
-		end
-	end
-
-	local function findItemFromPath(menu, path)
-		local sub_items, item
-		for _, text in ipairs(path) do
-			sub_items = (item or menu).sub_item_table
-			if not sub_items then return end
-			item = findItem(sub_items, text)
-			if not item then return end
-		end
-		return item
-	end
-
-	local item = findItemFromPath(menu, { ... })
-	if item and item[attrib_name] then
-		item[attrib_name] = replacement
-	end
-end
-
 -- Hook into ReaderFooter to add menu items to status bar
 ReaderFooter.addToMainMenu = function(self, menu_items)
 	-- Build the menu structure
@@ -184,7 +150,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 		for i = 1, MODE_COUNT do
 			table.insert(mode_submenu, {
 				text = MODE_NAMES[i],
-				checked_func = function() return current_mode == i end,
+				checked_func = function()
+					return current_mode == i
+				end,
 				callback = function()
 					setMode(i, self.ui)
 				end,
@@ -196,7 +164,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 		for name, symbol in pairs(SEPARATOR_TYPES) do
 			table.insert(separator_submenu, {
 				text = string.format("%s (%s)", name:gsub("_", " "), symbol),
-				checked_func = function() return getSetting(SETTINGS_KEY_SEPARATOR, "en_dash") == name end,
+				checked_func = function()
+					return getSetting(SETTINGS_KEY_SEPARATOR, "en_dash") == name
+				end,
 				callback = function()
 					G_reader_settings:saveSetting(SETTINGS_KEY_SEPARATOR, name)
 					UIManager:setDirty(self.ui.dialog, "ui")
@@ -205,7 +175,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 		end
 
 		return {
-			text = _("Header Mode"),
+			text = _("Header"),
 			sub_item_table = {
 				{
 					text = _("Select Header Mode"),
@@ -231,8 +201,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 							keep_menu_open = true,
 							callback = function()
 								local SpinWidget = require("ui/widget/spinwidget")
-								local current_size = getSetting(SETTINGS_KEY_FONT_SIZE, header_settings.text_font_size or 14)
-								local spin = SpinWidget:new{
+								local current_size =
+									getSetting(SETTINGS_KEY_FONT_SIZE, header_settings.text_font_size or 14)
+								local spin = SpinWidget:new({
 									title_text = _("Header Font Size"),
 									value = current_size,
 									value_min = 8,
@@ -244,7 +215,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 										G_reader_settings:saveSetting(SETTINGS_KEY_FONT_SIZE, spin.value)
 										UIManager:setDirty(self.ui.dialog, "ui")
 									end,
-								}
+								})
 								UIManager:show(spin)
 							end,
 						},
@@ -254,7 +225,8 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 								return getSetting(SETTINGS_KEY_FONT_BOLD, header_settings.text_font_bold or false)
 							end,
 							callback = function()
-								local current = getSetting(SETTINGS_KEY_FONT_BOLD, header_settings.text_font_bold or false)
+								local current =
+									getSetting(SETTINGS_KEY_FONT_BOLD, header_settings.text_font_bold or false)
 								G_reader_settings:saveSetting(SETTINGS_KEY_FONT_BOLD, not current)
 								UIManager:setDirty(self.ui.dialog, "ui")
 							end,
@@ -264,7 +236,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 							sub_item_table = {
 								{
 									text = _("Small"),
-									checked_func = function() return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "small" end,
+									checked_func = function()
+										return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "small"
+									end,
 									callback = function()
 										G_reader_settings:saveSetting(SETTINGS_KEY_TOP_PADDING, "small")
 										UIManager:setDirty(self.ui.dialog, "ui")
@@ -272,7 +246,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 								},
 								{
 									text = _("Default"),
-									checked_func = function() return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "default" end,
+									checked_func = function()
+										return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "default"
+									end,
 									callback = function()
 										G_reader_settings:saveSetting(SETTINGS_KEY_TOP_PADDING, "default")
 										UIManager:setDirty(self.ui.dialog, "ui")
@@ -280,7 +256,9 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 								},
 								{
 									text = _("Large"),
-									checked_func = function() return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "large" end,
+									checked_func = function()
+										return getSetting(SETTINGS_KEY_TOP_PADDING, "small") == "large"
+									end,
 									callback = function()
 										G_reader_settings:saveSetting(SETTINGS_KEY_TOP_PADDING, "large")
 										UIManager:setDirty(self.ui.dialog, "ui")
@@ -309,7 +287,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 							callback = function()
 								local SpinWidget = require("ui/widget/spinwidget")
 								local current_width = getSetting(SETTINGS_KEY_LEFT_WIDTH, 48)
-								local spin = SpinWidget:new{
+								local spin = SpinWidget:new({
 									title_text = _("Left Corner Max Width %"),
 									value = current_width,
 									value_min = 10,
@@ -321,7 +299,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 										G_reader_settings:saveSetting(SETTINGS_KEY_LEFT_WIDTH, spin.value)
 										UIManager:setDirty(self.ui.dialog, "ui")
 									end,
-								}
+								})
 								UIManager:show(spin)
 							end,
 						},
@@ -331,7 +309,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 							callback = function()
 								local SpinWidget = require("ui/widget/spinwidget")
 								local current_width = getSetting(SETTINGS_KEY_RIGHT_WIDTH, 48)
-								local spin = SpinWidget:new{
+								local spin = SpinWidget:new({
 									title_text = _("Right Corner Max Width %"),
 									value = current_width,
 									value_min = 10,
@@ -343,7 +321,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 										G_reader_settings:saveSetting(SETTINGS_KEY_RIGHT_WIDTH, spin.value)
 										UIManager:setDirty(self.ui.dialog, "ui")
 									end,
-								}
+								})
 								UIManager:show(spin)
 							end,
 						},
@@ -353,7 +331,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 							callback = function()
 								local SpinWidget = require("ui/widget/spinwidget")
 								local current_width = getSetting(SETTINGS_KEY_CENTER_WIDTH, 84)
-								local spin = SpinWidget:new{
+								local spin = SpinWidget:new({
 									title_text = _("Center Max Width %"),
 									value = current_width,
 									value_min = 10,
@@ -365,7 +343,7 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 										G_reader_settings:saveSetting(SETTINGS_KEY_CENTER_WIDTH, spin.value)
 										UIManager:setDirty(self.ui.dialog, "ui")
 									end,
-								}
+								})
 								UIManager:show(spin)
 							end,
 						},
@@ -378,9 +356,28 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 	-- Call the original function first
 	_ReaderFooter_addToMainMenu_orig(self, menu_items)
 
-	-- Add our menu item to the status bar menu
+	-- Add our menu item to the status bar menu at a specific position
 	if menu_items.status_bar and menu_items.status_bar.sub_item_table then
-		table.insert(menu_items.status_bar.sub_item_table, buildHeaderModeMenu())
+		local status_bar_menu = menu_items.status_bar.sub_item_table
+
+		-- Find the position of "Status bar presets"
+		local insert_pos = nil
+		for i, item in ipairs(status_bar_menu) do
+			local text = item.text or (item.text_func and item.text_func())
+			if text == _("Status bar presets") then
+				insert_pos = i + 1
+				-- Check if next item is already a separator
+				break
+			end
+		end
+
+		-- If we found the position, insert Header Mode and a separator after it
+		if insert_pos then
+			table.insert(status_bar_menu, insert_pos, buildHeaderModeMenu())
+			status_bar_menu[insert_pos].separator = true
+		else
+			table.insert(status_bar_menu, buildHeaderModeMenu())
+		end
 	end
 end
 
@@ -494,8 +491,7 @@ ReaderView.paintTo = function(self, bb, x, y)
 		centered_header = time
 	elseif current_mode == MODE_FULL_INFO then
 		-- Mode 6: Author + separator + title + separator + chapter (centered)
-		centered_header =
-			string.format("%s %s %s %s %s", book_author, separator, book_title, separator, book_chapter)
+		centered_header = string.format("%s %s %s %s %s", book_author, separator, book_title, separator, book_chapter)
 	end
 
 	-- Fit the text to available width
