@@ -1,7 +1,7 @@
 --[[
     This user patch adds a cyclable "header" into the reader display that combines functionality
-    from multiple header styles and allows cycling through different views by tapping the top
-    of the screen.
+    from multiple header styles and allows cycling through different views by tapping the header
+    region.
 
     View Modes (cycles in this order):
     1. Clean (nothing displayed)
@@ -13,7 +13,10 @@
 
     Default: Current time centered (mode 5)
 
-    To cycle through views: Tap anywhere in the top 15% of the screen
+    To cycle through views: Tap the top-center of the screen
+    (specifically: the center third horizontally, top 5% vertically)
+
+    This leaves the top corners available for bookmarks, rotation toggle, etc.
 
     It is up to you to provide enough of a top margin so that your book contents are not
     obscured by the header. You'll know right away if you need to increase the top margin.
@@ -80,21 +83,17 @@ end
 ReaderUI.init = function(self, ...)
 	local ret = _ReaderUI_init_orig(self, ...)
 
-	-- Register touch zone for header taps (top 15% of screen)
-	local header_height = screen_height * 0.15
+	-- Register touch zone for header taps (top 5% of screen, center third only)
+	-- This leaves the top corners available for other gestures
 	self:registerTouchZones({
 		{
 			id = "reader_header_cycling",
 			ges = "tap",
 			screen_zone = {
-				ratio_x = 0,
-				ratio_y = 0,
-				ratio_w = 1,
-				ratio_h = 0.15,
-			},
-			overrides = {
-				"tap_top_left_corner",
-				"tap_top_right_corner",
+				ratio_x = 0.33, -- Start at 1/3 from left (skip left third)
+				ratio_y = 0, -- Top of screen
+				ratio_w = 0.34, -- Middle third (from 0.33 to 0.67)
+				ratio_h = 0.05, -- Top 5% of screen
 			},
 			handler = function(ges)
 				cycleMode(self)
