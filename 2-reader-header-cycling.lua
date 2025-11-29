@@ -198,7 +198,6 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 					sub_item_table = {
 						{
 							text = _("Font Size"),
-							keep_menu_open = true,
 							callback = function()
 								local SpinWidget = require("ui/widget/spinwidget")
 								local current_size =
