@@ -1,7 +1,7 @@
 --[[
 	This user patch adds a cyclable "header" into the reader display that combines functionality
 	from multiple header styles.
-	
+
 	View Modes:
 	1. Clean (nothing displayed)
 	2. Print edition style (alternates page number position and centered text)
@@ -9,19 +9,22 @@
 	4. Current chapter (top left) + current time (top right)
 	5. Current time (centered)
 	6. Author + separator + title + separator + chapter (centered)
-	
+
 	Default: Current time centered (mode 5)
-	
+
 	Access via Status bar → Header menu:
 	- "Select Header Mode" - Choose a specific mode directly
 	- "Previous Header Mode" - Cycle backward through modes
 	- "Next Header Mode" - Cycle forward through modes
 	- "Header Settings" - Configure font size, padding, separators, and widths
-	
-	You can bind menu items to gestures in Settings → Taps and gestures → Gesture manager.
-	
+
+	Gesture Control:
+	You can bind gestures to cycle modes in Settings → Taps and gestures → Gesture manager:
+	- "Next Header Mode" - Cycle forward through header modes
+	- "Previous Header Mode" - Cycle backward through header modes
+
 	All settings are configurable via the menu system - no need to edit this file!
-	
+
 	Note: You may need to provide sufficient top margin so the header doesn't overlap your text.
 --]]
 
@@ -46,6 +49,7 @@ local T = require("ffi/util").template
 local ReaderView = require("apps/reader/modules/readerview")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local UIManager = require("ui/uimanager")
+local Dispatcher = require("dispatcher")
 
 -- Store original functions
 local _ReaderView_paintTo_orig = ReaderView.paintTo
@@ -378,6 +382,29 @@ ReaderFooter.addToMainMenu = function(self, menu_items)
 			table.insert(status_bar_menu, buildHeaderModeMenu())
 		end
 	end
+
+	-- Register dispatcher actions for gesture control
+	Dispatcher:registerAction("header_mode_next", {
+		category = "none",
+		event = "HeaderModeNext",
+		title = _("Next Header Mode"),
+		general = true,
+	})
+	Dispatcher:registerAction("header_mode_previous", {
+		category = "none",
+		event = "HeaderModePrevious",
+		title = _("Previous Header Mode"),
+		general = true,
+	})
+end
+
+-- Handle dispatcher events
+ReaderFooter.onHeaderModeNext = function(self)
+	cycleNext(self.ui)
+end
+
+ReaderFooter.onHeaderModePrevious = function(self)
+	cyclePrevious(self.ui)
 end
 
 -- Override paintTo to draw the header
